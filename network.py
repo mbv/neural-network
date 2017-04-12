@@ -4,9 +4,6 @@ from copy import copy
 
 
 class NeuralNetwork(object):
-    """
-    With sigmoid activation function
-    """
     t = 1
 
     def __init__(self, neurals_counts, learning_rate=0.2, momentum=0, verbosity=True, weights=None):
@@ -33,27 +30,22 @@ class NeuralNetwork(object):
         return 1.0 / (1.0 + math.exp(-self.t * value))
 
     def activate_derivative(self, value):
-        # here value is really not x, this is F(x), where F is activation function
-        # This is because sigmoidal function has derivative equal F(x)(1-F(x))
         return self.t * value * (1.0 - value)
 
     def _init_weights(self, neurals_counts, weights=None):
-        """
-        init waights and threshold (w1, ..., wn, w0)
-        """
         if not weights:
-            for i in range(len(neurals_counts))[1:]:
+            for i in range(1, len(neurals_counts)):
                 weights = []
                 weights_count = neurals_counts[i - 1] + 1
 
                 for _ in range(neurals_counts[i]):
-                    weights.append([random.random() - 0.5 for i in range(weights_count)])
+                    weights.append([random.random() - 0.5 for _ in range(weights_count)])
 
                 self.weights.append(weights)
         else:
             self.weights = weights
 
-        for i in range(len(neurals_counts))[1:]:
+        for i in range(1, len(neurals_counts)):
             weights_count = neurals_counts[i - 1] + 1
             prew_weights_corrections = []
 
@@ -85,9 +77,6 @@ class NeuralNetwork(object):
     def backpropagate(self, output, desired_output):
         error_gradient = [0] * self._layers_count
 
-        # calculate error gradient
-
-        # calculate for output(last) layer
         layer = -1
         errors = []
 
@@ -97,39 +86,35 @@ class NeuralNetwork(object):
 
         error_gradient[-1] = errors
 
-        # calculate for hidden layers
-        for layer in range(self._layers_count - 1)[::-1]:
+        for layer in range(self._layers_count - 2, -1, -1):
             errors = []
             next_layer = layer + 1
 
             for node, _ in enumerate(self.weights[layer]):
-                sum = 0
+                sum_value = 0
 
                 for next_node in range(len(self.weights[next_layer])):
                     gradient = error_gradient[next_layer][next_node]
                     weight = self.weights[next_layer][next_node][node]
-                    sum += gradient * weight
+                    sum_value += gradient * weight
 
                 value = self.node_values[layer][node]
-                errors.append(self.activate_derivative(value) * sum)
+                errors.append(self.activate_derivative(value) * sum_value)
 
             error_gradient[layer] = errors
 
-        # update weights
         for layer in range(self._layers_count):
             for node, _ in enumerate(self.weights[layer]):
                 er_gr = error_gradient[layer][node]
-                # update w0
                 self.weights[layer][node][-1] += self.learning_rate * er_gr
 
                 if layer == 0:
-                    input = self.input
+                    input_value = self.input
                 else:
-                    input = self.node_values[layer - 1]
+                    input_value = self.node_values[layer - 1]
 
-                # update other weights
                 for i, _ in enumerate(self.weights[layer][node][:-1]):
-                    weight_correction = self.learning_rate * er_gr * input[i]
+                    weight_correction = self.learning_rate * er_gr * input_value[i]
                     prev_correction = self.prev_weight_correction[layer][node][i]
                     self.weights[layer][node][i] += weight_correction + prev_correction * self.momentum
                     self.prev_weight_correction[layer][node][i] = weight_correction
@@ -138,8 +123,6 @@ class NeuralNetwork(object):
         for i in range(max_retries):
             errors = []
             for item in data:
-                # print '=================================='
-
                 desired_output = item['output']
 
                 output = self.calculate(item['input'])

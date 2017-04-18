@@ -3,7 +3,7 @@ import math
 from copy import copy
 
 
-class NeuralNetwork(object):
+class NeuralNetwork():
     t = 1
 
     def __init__(self, neurals_counts, learning_rate=0.2, momentum=0, verbosity=True, weights=None):
@@ -19,12 +19,9 @@ class NeuralNetwork(object):
 
         self._init_weights(neurals_counts, weights)
 
-    def format(self, l):
-        return ['%.2f' % i for i in l]
-
-    def log(self, *args):
+    def log(self, msg):
         if self.verbosity:
-            print(args)
+            print(msg)
 
     def activate(self, value):
         return 1.0 / (1.0 + math.exp(-self.t * value))
@@ -132,11 +129,7 @@ class NeuralNetwork(object):
                 self.backpropagate(output, desired_output)
 
             if i % 100 == 0:
-                print(self.root_mean_squared_error(errors))
-
-    def test(self, data):
-        for item in data:
-            print(self.format(self.calculate(item['input'])), self.format(item['output']))
+                self.log('step: {:5} error: {}'.format(i, self.root_mean_squared_error(errors)))
 
     @staticmethod
     def root_mean_squared_error(errors):
@@ -150,7 +143,7 @@ class NeuralNetwork(object):
     def least_mean_square(output, desired_output):
         err = 0
 
-        for i in range(len(output)):
-            err += (desired_output[i] - output[i]) ** 2
+        for i, output_value in enumerate(output):
+            err += (desired_output[i] - output_value) ** 2
 
         return err / 2
